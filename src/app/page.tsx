@@ -1,95 +1,339 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import { db } from "@/firebase";
+import { Close, Search } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Container,
+  Dialog,
+  FormControl,
+  IconButton,
+  Input,
+  InputAdornment,
+  InputLabel,
+  Stack,
+  TextField,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { theme } from "../theme";
 
 export default function Home() {
+  const [name, setName] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [pantryData, setPantryData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetchCollection();
+  }, []);
+
+  const fetchCollection = async () => {
+    try {
+      const querySnapShot = await getDocs(collection(db, "pantry"));
+      console.log("🚀 ~ fetchCollection ~ querySnapShot:", querySnapShot);
+      const data: any = querySnapShot.docs.map((doc) => ({
+        name: doc.id,
+        ...doc.data(),
+      }));
+      console.log("🚀 ~ fetchCollection ~ data:", data);
+      setPantryData(data);
+    } catch (error) {
+      console.log("Error fetching collection: ", error);
+    }
+  };
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+          pt: 15,
+        }}
+      >
+        <Container
+          sx={{
+            bgcolor: "background.default",
+            height: "70vh",
+            width: "80%",
+            display: "flex",
+            // justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            gap: "1rem",
+            p: 5,
+            borderRadius: 5,
+            boxShadow: 5,
+          }}
+        >
+          <Typography variant="h2" sx={{ color: "primary.main" }}>
+            Welcome to the Pantry!
+          </Typography>
+          <div
+            style={{
+              display: "flex",
+            }}
           >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+            <FormControl sx={{ width: "25ch", mx: 2 }} variant="standard">
+              <InputLabel htmlFor="standard-adornment-password">
+                Search
+              </InputLabel>
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                id="standard-adornment-password"
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton aria-label="toggle password visibility">
+                      <Search />
+                    </IconButton>
+                  </InputAdornment>
+                }
+              />
+            </FormControl>
+            <Button onClick={() => {
+              setOpen(!open)
+              fetchCollection();
+            }} variant="outlined">
+              Add new item
+            </Button>
+          </div>
+          {open && (
+            <Dialog
+              open={open}
+              sx={{
+                backgroundColor: "#21212192",
+                height: "100%",
+              }}
+            >
+              <Card
+                name={name}
+                quantity={quantity}
+                setName={setName}
+                setQuantity={setQuantity}
+                open={open}
+                setOpen={setOpen}
+              />
+            </Dialog>
+          )}
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+          <Stack
+            spacing={2}
+            sx={{
+              width: "80%",
+              overflow: "auto",
+            }}
+          >
+            {pantryData &&
+              pantryData
+                .filter((item: {name: string}) =>
+                  item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((item: { name: string; quantity: number }) => (
+                  <Container
+                    key={item.name}
+                    sx={{
+                      display: "flex",
+                      background: "",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "1rem",
+                      p: 2,
+                      borderRadius: 5,
+                      boxShadow: "0 0 8px rgba(0, 0, 0, 0.094)",
+                      cursor: "pointer",
+                      transitionDuration: 1000,
+                      "&:hover": {
+                        backgroundColor: "#304a3529",
+                      },
+                    }}
+                  >
+                    <Typography variant="body1">{item.name}</Typography>
+                    <Typography>{item.quantity}</Typography>
+                    <Stack direction="row" spacing={2}>
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          backgroundColor: "#304a3529",
+                          fontWeight: "bold",
+                          color: "#9fedd0",
+                          "&:hover": {
+                            backgroundColor: "#21212192",
+                          },
+                        }}
+                        onClick={async () => {
+                          await setDoc(doc(db, "pantry", item.name), {
+                            quantity: item.quantity + 1,
+                          });
+                          fetchCollection();
+                        }}
+                      >
+                        +
+                      </Button>
+                      <Button
+                        sx={{
+                          backgroundColor: "#304a3529",
+                          fontWeight: "bold",
+                          color: "#9fedd0",
+                          "&:hover": {
+                            backgroundColor: "#21212192",
+                          },
+                        }}
+                        variant="outlined"
+                        onClick={async () => {
+                          await setDoc(doc(db, "pantry", item.name), {
+                            quantity: item.quantity - 1,
+                          });
+                          fetchCollection();
+                        }}
+                      >
+                        -
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={() => {
+                          setName(item.name);
+                          setQuantity(item.quantity);
+                          setOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="contained"
+                        onClick={async () => {
+                          await deleteDoc(doc(db, "pantry", item.name));
+                          fetchCollection();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </Stack>
+                  </Container>
+                ))}
+          </Stack>
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
+
+type Props = {
+  name: any;
+  quantity: number;
+  setName: any;
+  setQuantity: any;
+  open: boolean;
+  setOpen: any;
+};
+
+const Card = ({
+  name,
+  quantity,
+  setName,
+  setQuantity,
+  open,
+  setOpen,
+}: Props) => {
+  const handleSubmit = async () => {
+    if (name === "") {
+      console.log("Please enter a name");
+      return;
+    }
+
+    if (quantity === 0) {
+      console.log("Please enter a quantity");
+      return;
+    }
+
+    if (name) {
+      const docRef = doc(db, "pantry", name);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        await setDoc(docRef, {
+          quantity,
+        });
+      } else {
+        await setDoc(docRef, {
+          quantity,
+        });
+        console.log("Document successfully created!");
+      }
+    }
+
+    setName("");
+    setQuantity(1);
+    setOpen(false);
+  };
+
+  return (
+    <Container
+      sx={{
+        backgroundColor: "#D6BD98",
+        width: "100%",
+        height: "50vh",
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        flexDirection: "column",
+      }}
+    >
+      <div
+        onClick={() => setOpen(!open)}
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 10,
+          cursor: "pointer",
+          padding: "5px",
+        }}
+      >
+        <Close />
+      </div>
+      <Typography variant="h3" sx={{ color: "primary.main", pt: 4 }}>
+        Add Inventory
+      </Typography>
+      <TextField
+        id="outlined-basic"
+        label="Enter item name"
+        variant="outlined"
+        type="text"
+        placeholder="Enter item name"
+        value={name}
+        required
+        onChange={(e) => setName(e.target.value)}
+      />
+      <TextField
+        id="outlined-basic"
+        variant="outlined"
+        value={quantity}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+      />
+
+      <Button
+        variant="outlined"
+        onClick={handleSubmit}
+        sx={{
+          width: "100%",
+          marginTop: "1rem",
+        }}
+      >
+        Add
+      </Button>
+    </Container>
+  );
+};
