@@ -33,6 +33,7 @@ export default function Home() {
   const [pantryData, setPantryData] = useState([]);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [updateData, setUpdateData] = useState(false);
 
   useEffect(() => {
     fetchCollection();
@@ -105,10 +106,13 @@ export default function Home() {
                 }
               />
             </FormControl>
-            <Button onClick={() => {
-              setOpen(!open)
-              fetchCollection();
-            }} variant="outlined">
+            <Button
+              onClick={() => {
+                setOpen(!open);
+                fetchCollection();
+              }}
+              variant="outlined"
+            >
               Add new item
             </Button>
           </div>
@@ -127,6 +131,9 @@ export default function Home() {
                 setQuantity={setQuantity}
                 open={open}
                 setOpen={setOpen}
+                updateData={updateData}
+                setUpdateData={setUpdateData}
+                fetchCollection={fetchCollection}
               />
             </Dialog>
           )}
@@ -140,7 +147,7 @@ export default function Home() {
           >
             {pantryData &&
               pantryData
-                .filter((item: {name: string}) =>
+                .filter((item: { name: string }) =>
                   item.name.toLowerCase().includes(searchTerm.toLowerCase())
                 )
                 .map((item: { name: string; quantity: number }) => (
@@ -166,25 +173,6 @@ export default function Home() {
                     <Typography>{item.quantity}</Typography>
                     <Stack direction="row" spacing={2}>
                       <Button
-                        variant="outlined"
-                        sx={{
-                          backgroundColor: "#304a3529",
-                          fontWeight: "bold",
-                          color: "#9fedd0",
-                          "&:hover": {
-                            backgroundColor: "#21212192",
-                          },
-                        }}
-                        onClick={async () => {
-                          await setDoc(doc(db, "pantry", item.name), {
-                            quantity: item.quantity + 1,
-                          });
-                          fetchCollection();
-                        }}
-                      >
-                        +
-                      </Button>
-                      <Button
                         sx={{
                           backgroundColor: "#304a3529",
                           fontWeight: "bold",
@@ -204,10 +192,30 @@ export default function Home() {
                         -
                       </Button>
                       <Button
+                        variant="outlined"
+                        sx={{
+                          backgroundColor: "#304a3529",
+                          fontWeight: "bold",
+                          color: "#9fedd0",
+                          "&:hover": {
+                            backgroundColor: "#21212192",
+                          },
+                        }}
+                        onClick={async () => {
+                          await setDoc(doc(db, "pantry", item.name), {
+                            quantity: item.quantity + 1,
+                          });
+                          fetchCollection();
+                        }}
+                      >
+                        +
+                      </Button>
+                      <Button
                         variant="contained"
                         onClick={() => {
                           setName(item.name);
                           setQuantity(item.quantity);
+                          setUpdateData(true);
                           setOpen(true);
                         }}
                       >
@@ -239,6 +247,9 @@ type Props = {
   setQuantity: any;
   open: boolean;
   setOpen: any;
+  updateData: any;
+  setUpdateData: any;
+  fetchCollection: any;
 };
 
 const Card = ({
@@ -248,6 +259,9 @@ const Card = ({
   setQuantity,
   open,
   setOpen,
+  updateData,
+  setUpdateData,
+  fetchCollection
 }: Props) => {
   const handleSubmit = async () => {
     if (name === "") {
@@ -267,6 +281,8 @@ const Card = ({
         await setDoc(docRef, {
           quantity,
         });
+        console.log("Document successfully updated!");
+        setUpdateData(false);
       } else {
         await setDoc(docRef, {
           quantity,
@@ -275,6 +291,7 @@ const Card = ({
       }
     }
 
+    fetchCollection()
     setName("");
     setQuantity(1);
     setOpen(false);
@@ -293,7 +310,12 @@ const Card = ({
       }}
     >
       <div
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          setUpdateData(false);
+          setOpen(!open);
+          setName("");
+          setQuantity(1);
+        }}
         style={{
           position: "absolute",
           top: 20,
@@ -307,16 +329,29 @@ const Card = ({
       <Typography variant="h3" sx={{ color: "primary.main", pt: 4 }}>
         Add Inventory
       </Typography>
-      <TextField
-        id="outlined-basic"
-        label="Enter item name"
-        variant="outlined"
-        type="text"
-        placeholder="Enter item name"
-        value={name}
-        required
-        onChange={(e) => setName(e.target.value)}
-      />
+      {updateData ? (
+        <TextField
+          id="outlined-basic"
+          label="Enter item name"
+          variant="outlined"
+          type="text"
+          placeholder="Enter item name"
+          value={name}
+          required
+          aria-readonly
+        />
+      ) : (
+        <TextField
+          id="outlined-basic"
+          label="Enter item name"
+          variant="outlined"
+          type="text"
+          placeholder="Enter item name"
+          value={name}
+          required
+          onChange={(e) => setName(e.target.value)}
+        />
+      )}
       <TextField
         id="outlined-basic"
         variant="outlined"
@@ -332,7 +367,7 @@ const Card = ({
           marginTop: "1rem",
         }}
       >
-        Add
+        {updateData ? "Update" : "Add"}
       </Button>
     </Container>
   );
