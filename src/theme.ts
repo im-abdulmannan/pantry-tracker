@@ -25,9 +25,14 @@ export const theme = createTheme({
         fontSize: "1.5rem",
         fontWeight: 600,
       },
+      h4: {
+        fontSize: "1.5rem",
+        color: "#D6BD98",
+      },
       body1: {
         fontSize: "1.10rem",
         fontWeight: 400,
+        main: "#fff"
       }
     },
   });
