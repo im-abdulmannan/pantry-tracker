@@ -49,12 +49,10 @@ export default function Home() {
   const fetchCollection = async () => {
     try {
       const querySnapShot = await getDocs(collection(db, "pantry"));
-      console.log("🚀 ~ fetchCollection ~ querySnapShot:", querySnapShot);
       const data: any = querySnapShot.docs.map((doc) => ({
         name: doc.id,
         ...doc.data(),
       }));
-      console.log("🚀 ~ fetchCollection ~ data:", data);
       setPantryData(data);
     } catch (error) {
       console.log("Error fetching collection: ", error);
