@@ -33,6 +33,7 @@ import {
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { theme } from "../theme";
+import RecipeDialog from "./components/RecipeDialog";
 
 export default function Home() {
   const [name, setName] = useState("");
@@ -41,6 +42,7 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [updateData, setUpdateData] = useState(false);
+  const [recipeCard, setRecipeCard] = useState(false);
 
   useEffect(() => {
     fetchCollection();
@@ -91,9 +93,10 @@ export default function Home() {
           <div
             style={{
               display: "flex",
+              gap: "1rem",
             }}
           >
-            <FormControl sx={{ width: "25ch", mx: 2 }} variant="standard">
+            <FormControl sx={{ width: "25ch" }} variant="standard">
               <InputLabel htmlFor="standard-adornment-password">
                 Search
               </InputLabel>
@@ -119,6 +122,16 @@ export default function Home() {
             >
               Add new item
             </Button>
+            {pantryData.length > 0 && (
+              <Button
+                onClick={() => {
+                  setRecipeCard(!recipeCard);
+                }}
+                variant="outlined"
+              >
+                Get Recipes
+              </Button>
+            )}
           </div>
           {open && (
             <Dialog
@@ -138,6 +151,24 @@ export default function Home() {
                 updateData={updateData}
                 setUpdateData={setUpdateData}
                 fetchCollection={fetchCollection}
+              />
+            </Dialog>
+          )}
+          {recipeCard === true && (
+            <Dialog
+              open={recipeCard}
+              PaperProps={{
+                sx: {
+                  backgroundColor: "#D6BD98",
+                  height: "100%",
+                  width: "100%",
+                },
+              }}
+              maxWidth="md"
+            >
+              <RecipeDialog
+                pantryData={pantryData}
+                setRecipeCard={setRecipeCard}
               />
             </Dialog>
           )}
@@ -183,104 +214,107 @@ export default function Home() {
                         width: "40%",
                       }}
                     >
-                      <Box sx={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}>
+                      <Box
+                        sx={{
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Typography variant="h4">{item.name}</Typography>
                         <Typography variant="h4">{item.quantity}</Typography>
                       </Box>
                     </Stack>
 
-                    <Box sx={{
+                    <Box
+                      sx={{
                         display: "flex",
-                        gap: "1rem"
-                      }}>
-
-                    <Stack
-                      sx={{
-                        height: "50px",
-                        gap: "2px"
+                        gap: "1rem",
                       }}
                     >
-                      <Button
-                        variant="text"
+                      <Stack
                         sx={{
-                          backgroundColor: "#304a3529",
+                          height: "50px",
+                          gap: "2px",
+                        }}
+                      >
+                        <Button
+                          variant="text"
+                          sx={{
+                            backgroundColor: "#304a3529",
+                            fontWeight: "bold",
+                            color: "#9fedd0",
+                            height: "48%",
+                            "&:hover": {
+                              backgroundColor: "#21212192",
+                            },
+                          }}
+                          onClick={async () => {
+                            await setDoc(doc(db, "pantry", item.name), {
+                              quantity: item.quantity + 1,
+                            });
+                            fetchCollection();
+                          }}
+                        >
+                          <KeyboardArrowUpOutlined />
+                        </Button>
+                        <Button
+                          sx={{
+                            backgroundColor: "#304a3529",
+                            fontWeight: "bold",
+                            color: "#9fedd0",
+                            height: "48%",
+                            "&:hover": {
+                              backgroundColor: "#21212192",
+                            },
+                          }}
+                          variant="text"
+                          onClick={async () => {
+                            await setDoc(doc(db, "pantry", item.name), {
+                              quantity: item.quantity - 1,
+                            });
+                            fetchCollection();
+                          }}
+                        >
+                          <KeyboardArrowDownOutlined />
+                        </Button>
+                      </Stack>
+                      <Button
+                        variant="contained"
+                        sx={{
+                          backgroundColor: "#098243",
                           fontWeight: "bold",
                           color: "#9fedd0",
-                          height: "48%",
                           "&:hover": {
-                            backgroundColor: "#21212192",
+                            backgroundColor: "#024e26",
+                          },
+                        }}
+                        onClick={() => {
+                          setName(item.name);
+                          setQuantity(item.quantity);
+                          setUpdateData(true);
+                          setOpen(true);
+                        }}
+                      >
+                        <Edit />
+                      </Button>
+                      <Button
+                        variant="contained"
+                        sx={{
+                          backgroundColor: "#9c0707",
+                          fontWeight: "bold",
+                          color: "#9fedd0",
+                          "&:hover": {
+                            backgroundColor: "#a50c0c",
                           },
                         }}
                         onClick={async () => {
-                          await setDoc(doc(db, "pantry", item.name), {
-                            quantity: item.quantity + 1,
-                          });
+                          await deleteDoc(doc(db, "pantry", item.name));
                           fetchCollection();
                         }}
                       >
-                        <KeyboardArrowUpOutlined />
+                        <DeleteOutlineOutlined />
                       </Button>
-                      <Button
-                        sx={{
-                          backgroundColor: "#304a3529",
-                          fontWeight: "bold",
-                          color: "#9fedd0",
-                          height: "48%",
-                          "&:hover": {
-                            backgroundColor: "#21212192",
-                          },
-                        }}
-                        variant="text"
-                        onClick={async () => {
-                          await setDoc(doc(db, "pantry", item.name), {
-                            quantity: item.quantity - 1,
-                          });
-                          fetchCollection();
-                        }}
-                      >
-                        <KeyboardArrowDownOutlined />
-                      </Button>
-                    </Stack>
-                    <Button
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#098243",
-                        fontWeight: "bold",
-                        color: "#9fedd0",
-                        "&:hover": {
-                          backgroundColor: "#024e26",
-                        },
-                      }}
-                      onClick={() => {
-                        setName(item.name);
-                        setQuantity(item.quantity);
-                        setUpdateData(true);
-                        setOpen(true);
-                      }}
-                    >
-                      <Edit />
-                    </Button>
-                    <Button
-                      variant="contained"
-                      sx={{
-                        backgroundColor: "#9c0707",
-                        fontWeight: "bold",
-                        color: "#9fedd0",
-                        "&:hover": {
-                          backgroundColor: "#a50c0c",
-                        },
-                      }}
-                      onClick={async () => {
-                        await deleteDoc(doc(db, "pantry", item.name));
-                        fetchCollection();
-                      }}
-                    >
-                      <DeleteOutlineOutlined />
-                    </Button>
                     </Box>
                   </Container>
                 ))}

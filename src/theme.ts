@@ -29,6 +29,10 @@ export const theme = createTheme({
         fontSize: "1.5rem",
         color: "#D6BD98",
       },
+      h5: {
+        fontSize: "1rem",
+        color: "wheat"
+      },
       body1: {
         fontSize: "1.10rem",
         fontWeight: 400,
