@@ -33,7 +33,6 @@ const RecipeDialog = ({ pantryData, setRecipeCard }: Props) => {
     const response = await axios.get(
       `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${ingredients}&number=5&apiKey=${process.env.NEXT_PUBLIC_SPOONACULAR_API_KEY}`
     );
-    console.log("🚀 ~ fetchRecipes ~ response.data:", response.data);
     setRecipes(response.data);
   };
 
